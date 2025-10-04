@@ -1,21 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TodoMvc.Data;
 using TodoMvc.Models;
 
 namespace TodoMvc.Controllers
 {
     public class TodosController : Controller
     {
-        // Временное хранилище задач (пока без базы)
-        private static List<TodoItem> _todos = new List<TodoItem>
+        private readonly TodoContext _context;
+
+        public TodosController(TodoContext context)
         {
-            new TodoItem { Id = 1, Title = "Купить хлеб", IsComplete = false },
-            new TodoItem { Id = 2, Title = "Позаниматься C#", IsComplete = true }
-        };
+            _context = context;
+        }
 
         public IActionResult Index()
         {
             // Передаём список задач во View
-            return View(_todos);
+            return View(_context.Todos);
         }
 
         // Показ формы
@@ -31,10 +32,12 @@ namespace TodoMvc.Controllers
         {
             if (ModelState.IsValid)
             {
-                todo.Id = _todos.Count + 1;
-                _todos.Add(todo);
+                todo.Id = _context.Todos.Count() + 1;
+                _context.Todos.Add(todo);
+                _context.SaveChanges();
                 return RedirectToAction("Index");
             }
+
             return View(todo);
         }
 
@@ -44,10 +47,11 @@ namespace TodoMvc.Controllers
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var todo = _todos.FirstOrDefault(t => t.Id == id);
+            var todo = _context.Todos.FirstOrDefault(t => t.Id == id);
             if (todo == null)
                 return NotFound();
 
+            _context.SaveChanges();
             return View(todo);
         }
 
@@ -55,7 +59,7 @@ namespace TodoMvc.Controllers
         [HttpPost]
         public IActionResult Edit(TodoItem updatedTodo)
         {
-            var existing = _todos.FirstOrDefault(t => t.Id == updatedTodo.Id);
+            var existing = _context.Todos.FirstOrDefault(t => t.Id == updatedTodo.Id);
             if (existing == null)
                 return NotFound();
 
@@ -63,6 +67,7 @@ namespace TodoMvc.Controllers
             existing.Description = updatedTodo.Description;
             existing.IsComplete = updatedTodo.IsComplete;
 
+            _context.SaveChanges();
             return RedirectToAction("Index");
         }
 
@@ -71,20 +76,22 @@ namespace TodoMvc.Controllers
         [HttpGet]
         public IActionResult Delete(int id)
         {
-            var todo = _todos.FirstOrDefault(t => t.Id == id);
+            var todo = _context.Todos.FirstOrDefault(t => t.Id == id);
             if (todo == null)
                 return NotFound();
 
+            _context.SaveChanges();
             return View(todo);
         }
 
         [HttpPost, ActionName("Delete")]
         public IActionResult DeleteConfirmed(int id)
         {
-            var todo = _todos.FirstOrDefault(t => t.Id == id);
+            var todo = _context.Todos.FirstOrDefault(t => t.Id == id);
             if (todo != null)
-                _todos.Remove(todo);
+                _context.Todos.Remove(todo);
 
+            _context.SaveChanges();
             return RedirectToAction("Index");
         }
     }
