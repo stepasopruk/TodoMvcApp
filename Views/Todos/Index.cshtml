@@ -1,0 +1,39 @@
+﻿@model IEnumerable<TodoMvc.Models.TodoItem>
+
+<h2>Список задач</h2>
+<p>
+    <a asp-action="Create" class="btn btn-success">Добавить задачу</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Описание</th>
+            <th>Выполнено</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var todo in Model)
+        {
+            <tr>
+                <td>@todo.Title</td>
+                <td>@todo.Description</td>
+                <td>
+                    @if (todo.IsComplete)
+                    {
+                        <span style="color: green;">✔</span>
+                    }
+                    else
+                    {
+                        <span style="color: red;">✖</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@todo.Id" class="btn btn-sm btn-warning">Редактировать</a>
+                    <a asp-action="Delete" asp-route-id="@todo.Id" class="btn btn-sm btn-danger">Удалить</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
