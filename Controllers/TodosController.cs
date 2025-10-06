@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using TodoMvc.Data;
 using TodoMvc.Models;
 
@@ -13,10 +15,10 @@ namespace TodoMvc.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            // Передаём список задач во View
-            return View(_context.Todos);
+            var todos = await _context.Todos.ToListAsync();
+            return View(todos);
         }
 
         // Показ формы
@@ -28,13 +30,12 @@ namespace TodoMvc.Controllers
 
         // Обработка формы
         [HttpPost]
-        public IActionResult Create(TodoItem todo)
+        public async Task<IActionResult> Create(TodoItem todo)
         {
             if (ModelState.IsValid)
             {
-                todo.Id = _context.Todos.Count() + 1;
                 _context.Todos.Add(todo);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
 
@@ -45,53 +46,54 @@ namespace TodoMvc.Controllers
 
         // Показ формы редактирования
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var todo = _context.Todos.FirstOrDefault(t => t.Id == id);
-            if (todo == null)
+            var todo = await _context.Todos.FindAsync(id);
+
+            if (todo == null) 
                 return NotFound();
 
-            _context.SaveChanges();
             return View(todo);
         }
 
         // Обработка изменений
         [HttpPost]
-        public IActionResult Edit(TodoItem updatedTodo)
+        public async Task<IActionResult> Edit(TodoItem todo)
         {
-            var existing = _context.Todos.FirstOrDefault(t => t.Id == updatedTodo.Id);
-            if (existing == null)
-                return NotFound();
+            if (ModelState.IsValid)
+            {
+                _context.Todos.Update(todo);
+                await _context.SaveChangesAsync();
+                return RedirectToAction("Index");
+            }
 
-            existing.Title = updatedTodo.Title;
-            existing.Description = updatedTodo.Description;
-            existing.IsComplete = updatedTodo.IsComplete;
-
-            _context.SaveChanges();
-            return RedirectToAction("Index");
+            return View(todo);
         }
 
         // Удаление
 
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var todo = _context.Todos.FirstOrDefault(t => t.Id == id);
-            if (todo == null)
+            var todo = await _context.Todos.FindAsync(id);
+            
+            if (todo == null) 
                 return NotFound();
-
-            _context.SaveChanges();
+            
             return View(todo);
         }
 
         [HttpPost, ActionName("Delete")]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var todo = _context.Todos.FirstOrDefault(t => t.Id == id);
+            var todo = await _context.Todos.FindAsync(id);
+            
             if (todo != null)
+            {
                 _context.Todos.Remove(todo);
+                await _context.SaveChangesAsync();
+            }
 
-            _context.SaveChanges();
             return RedirectToAction("Index");
         }
     }
